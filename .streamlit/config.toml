@@ -4,3 +4,6 @@ runOnSave = true
 
 [browser]
 gatherUsageStats = false
+
+[general]
+email = ""
