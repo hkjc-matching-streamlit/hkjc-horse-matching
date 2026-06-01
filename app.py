@@ -1,3 +1,4 @@
+import io
 import streamlit as st
 
 # ===== Password Protection =====
@@ -99,6 +100,17 @@ def save_data(df: pd.DataFrame):
     clean.to_excel(DATA_XLSX, index=False)
     clean.to_csv(DATA_CSV, index=False, encoding="utf-8-sig")
     load_data.clear()
+
+def df_to_csv_bytes(df: pd.DataFrame):
+    clean = normalize_df(df)
+    return clean.to_csv(index=False, encoding="utf-8-sig").encode("utf-8-sig")
+
+def df_to_excel_bytes(df: pd.DataFrame):
+    clean = normalize_df(df)
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        clean.to_excel(writer, index=False, sheet_name="horses")
+    return output.getvalue()
 
 
 def add_horse(df: pd.DataFrame, horse_name: str, email_addr: str):
@@ -396,7 +408,7 @@ if not df_current.empty:
         hide_index=True,
     )
 
-    c1, c2, c3 = st.columns(3)
+    c1, c2, c3, c4, c5 = st.columns(5)
 
     for_saving_df = edited_df.copy() if edited_df is not None else df_current.copy()
 
@@ -414,6 +426,24 @@ if not df_current.empty:
             st.rerun()
 
     with c3:
+        st.download_button(
+            "⬇️ 下載 CSV",
+            data=df_to_csv_bytes(for_saving_df),
+            file_name="horses_backup.csv",
+            mime="text/csv",
+            width="stretch",
+        )
+
+    with c4:
+        st.download_button(
+            "⬇️ 下載 Excel",
+            data=df_to_excel_bytes(for_saving_df),
+            file_name="horses_backup.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            width="stretch",
+        )
+
+    with c5:
         st.metric("已勾選馬匹", int(for_saving_df["狀態"].apply(to_bool).sum()))
 else:
     st.info("目前名單是空的，請先在上方新增第一匹馬。")
